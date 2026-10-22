@@ -6,7 +6,8 @@ import { supabase, type Couple, type Player } from "@/lib/supabase";
 import { getMe, setMe } from "@/lib/session";
 import { coupleBorder, coupleShadow, coupleText, coupleTint, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
-import { Arrow, Check, CoupleIcon, Dice, Glass, Heart } from "@/components/art";
+import { Arrow, Check, Dice, Glass, Heart } from "@/components/art";
+import { CoupleAvatar } from "@/components/CoupleAvatar";
 
 export default function Page() {
   return (
@@ -184,8 +185,8 @@ function Join() {
                           : "border-transparent opacity-85"
                       }`}
                     >
-                      <span className={`relative size-11 transition duration-300 ${on ? "scale-115" : ""}`}>
-                        <CoupleIcon idx={c.idx} className="size-full" />
+                      <span className={`relative size-16 transition duration-300 ${on ? "scale-115" : ""}`}>
+                        <CoupleAvatar idx={c.idx} className="size-full" />
                         {on && <Check className="absolute -top-1.5 -left-2 size-6 animate-pop" />}
                       </span>
                       <span className={on ? coupleText[c.idx] : ""}>{c.name}</span>

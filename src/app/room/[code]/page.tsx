@@ -6,7 +6,8 @@ import { supabase, type Couple, type Player } from "@/lib/supabase";
 import { getMe, clearMe, type Me } from "@/lib/session";
 import { coupleBg, coupleBorder, coupleText, coupleTint, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
-import { CoupleIcon, Hourglass, Sparkle } from "@/components/art";
+import { Hourglass, Sparkle } from "@/components/art";
+import { CoupleAvatar } from "@/components/CoupleAvatar";
 
 type Conn = "connecting" | "live" | "down";
 const EXPECTED = 8;
@@ -117,7 +118,7 @@ export default function Room({ params }: { params: Promise<{ code: string }> }) 
           <p
             className={`mt-2 inline-flex animate-rise items-center gap-1 rounded-full px-3 py-1 font-bold [animation-delay:250ms] ${coupleTint[mine.idx]} ${coupleText[mine.idx]}`}
           >
-            <CoupleIcon idx={mine.idx} className="size-5" /> {mine.name}
+            <CoupleAvatar idx={mine.idx} className="size-6" badge={false} /> {mine.name}
           </p>
         )}
       </header>
@@ -159,7 +160,7 @@ export default function Room({ params }: { params: Promise<{ code: string }> }) 
               }`}
               style={delay(i + 7)}
             >
-              <CoupleIcon idx={c.idx} className="size-7" />
+              <CoupleAvatar idx={c.idx} className="size-10" />
               <span className={`font-bold ${coupleText[c.idx]}`}>{c.name}</span>
               <span className="mr-auto flex flex-wrap gap-1.5">
                 {ps.length ? (
