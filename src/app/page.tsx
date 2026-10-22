@@ -4,8 +4,9 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase, type Couple, type Player } from "@/lib/supabase";
 import { getMe, setMe } from "@/lib/session";
-import { coupleBorder, coupleEmoji, coupleShadow, coupleText, coupleTint, delay } from "@/lib/colors";
+import { coupleBorder, coupleShadow, coupleText, coupleTint, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
+import { Arrow, Check, CoupleIcon, Dice, Glass, Heart } from "@/components/art";
 
 export default function Page() {
   return (
@@ -100,15 +101,15 @@ function Join() {
 
   const n = name.trim();
   const ready = status === "ready" && coupleId && n;
-  const cta = busy ? "נכנסים…" : !n ? "איך קוראים לך?" : !coupleId ? "בחרו זוג 👆" : "יאללה, נכנסים 🚀";
+  const cta = busy ? "נכנסים…" : !n ? "איך קוראים לך?" : !coupleId ? "בחרו זוג" : "יאללה, נכנסים";
 
   return (
     <form onSubmit={join} className="flex flex-col gap-6 pt-6 pb-28">
       <header className="text-center">
-        <div className="flex justify-center gap-3 text-6xl">
-          <span className="inline-block animate-float">🍷</span>
-          <span className="inline-block animate-float [animation-delay:-1.2s]">🎲</span>
-          <span className="inline-block animate-float [animation-delay:-2.4s]">💘</span>
+        <div className="flex items-end justify-center gap-2">
+          <Glass className="size-16 animate-float drop-shadow-[0_8px_16px_rgb(255_79_139/0.45)]" />
+          <Dice className="size-20 animate-float drop-shadow-[0_8px_16px_rgb(155_107_255/0.5)] [animation-delay:-1.2s]" />
+          <Heart className="size-16 animate-float drop-shadow-[0_8px_16px_rgb(255_79_139/0.45)] [animation-delay:-2.4s]" />
         </div>
         <h1 className="mt-4 animate-pop text-5xl font-black text-party [animation-delay:150ms]">ערב זוגות</h1>
         <p className="mt-2 animate-rise text-mute [animation-delay:300ms]">רק זוג אחד יוצא מכאן עם כבוד</p>
@@ -183,8 +184,9 @@ function Join() {
                           : "border-transparent opacity-85"
                       }`}
                     >
-                      <span className={`text-3xl transition duration-300 ${on ? "scale-125" : ""}`}>
-                        {on ? "✅" : coupleEmoji[c.idx]}
+                      <span className={`relative size-11 transition duration-300 ${on ? "scale-115" : ""}`}>
+                        <CoupleIcon idx={c.idx} className="size-full" />
+                        {on && <Check className="absolute -top-1.5 -left-2 size-6 animate-pop" />}
                       </span>
                       <span className={on ? coupleText[c.idx] : ""}>{c.name}</span>
                       <span className="line-clamp-1 text-xs font-normal text-mute">
@@ -213,6 +215,7 @@ function Join() {
             >
               {busy && <span className="me-2 inline-block size-5 animate-spin rounded-full border-3 border-white/30 border-t-white align-middle" />}
               {cta}
+              {ready && !busy && <Arrow className="ms-2 inline-block size-6 align-[-4px]" />}
             </button>
           </div>
         </>

@@ -4,8 +4,9 @@ import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase, type Couple, type Player } from "@/lib/supabase";
 import { getMe, clearMe, type Me } from "@/lib/session";
-import { coupleBg, coupleBorder, coupleEmoji, coupleText, coupleTint, delay } from "@/lib/colors";
+import { coupleBg, coupleBorder, coupleText, coupleTint, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
+import { CoupleIcon, Hourglass, Sparkle } from "@/components/art";
 
 type Conn = "connecting" | "live" | "down";
 const EXPECTED = 8;
@@ -47,7 +48,7 @@ export default function Room({ params }: { params: Promise<{ code: string }> }) 
       const fresh = p.data.filter((x) => known.current && !known.current.has(x.id) && x.id !== m.playerId);
       if (fresh.length) {
         const last = fresh[fresh.length - 1];
-        setToast({ id: last.id, text: `${last.name} הגיע/ה! 🎉` });
+        setToast({ id: last.id, text: `${last.name} הגיע/ה!` });
         buzz(15);
       }
       known.current = new Set(p.data.map((x) => x.id));
@@ -98,7 +99,7 @@ export default function Room({ params }: { params: Promise<{ code: string }> }) 
           role="status"
           className="fixed inset-x-0 top-[max(0.75rem,env(safe-area-inset-top))] z-20 mx-auto w-fit animate-pop rounded-full bg-party px-5 py-2.5 font-bold text-white shadow-xl shadow-pop/40"
         >
-          {toast.text}
+          <span className="flex items-center gap-2"><Sparkle className="size-5 animate-spin [animation-duration:3s]" />{toast.text}</span>
         </div>
       )}
 
@@ -110,21 +111,19 @@ export default function Room({ params }: { params: Promise<{ code: string }> }) 
       <header className="-mt-2 text-center">
         <h1 className="animate-pop text-4xl font-black [animation-delay:100ms]">
           היי <span className="text-party">{me.name}</span>{" "}
-          <span className="inline-block origin-bottom-right animate-wiggle [animation-delay:700ms] [animation-iteration-count:3]">
-            👋
-          </span>
+          <Sparkle className="inline-block size-7 animate-wiggle align-[-2px] [animation-delay:700ms] [animation-iteration-count:3]" />
         </h1>
         {mine && (
           <p
             className={`mt-2 inline-flex animate-rise items-center gap-1 rounded-full px-3 py-1 font-bold [animation-delay:250ms] ${coupleTint[mine.idx]} ${coupleText[mine.idx]}`}
           >
-            {coupleEmoji[mine.idx]} {mine.name}
+            <CoupleIcon idx={mine.idx} className="size-5" /> {mine.name}
           </p>
         )}
       </header>
 
       <div className="card animate-rise rounded-3xl p-6 text-center [animation-delay:350ms]">
-        <div className="inline-block animate-float text-5xl">⏳</div>
+        <Hourglass className="mx-auto size-16 animate-float drop-shadow-[0_8px_16px_rgb(255_201_60/0.35)]" />
         <p className="mt-3 flex items-center justify-center gap-1 text-lg font-bold">
           מחכים למנחה שיתחיל
           {[0, 1, 2].map((i) => (
@@ -160,7 +159,7 @@ export default function Room({ params }: { params: Promise<{ code: string }> }) 
               }`}
               style={delay(i + 7)}
             >
-              <span className="text-xl">{coupleEmoji[c.idx]}</span>
+              <CoupleIcon idx={c.idx} className="size-7" />
               <span className={`font-bold ${coupleText[c.idx]}`}>{c.name}</span>
               <span className="mr-auto flex flex-wrap gap-1.5">
                 {ps.length ? (
