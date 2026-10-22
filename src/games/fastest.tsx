@@ -5,6 +5,7 @@ import { byKind, coupleOf, mineOf, playerName, submit, type Ctx } from "@/lib/ga
 import { coupleColor, Hold, PromptCard } from "@/components/ui";
 import { Bolt } from "@/components/art";
 import { buzz } from "@/lib/ux";
+import { play } from "@/lib/sound";
 import { Progress } from "./likely";
 import { merge, type GameDef } from "./types";
 
@@ -31,6 +32,7 @@ function Arena(ctx: Ctx) {
       greenAt.current = performance.now();
       setGreen(true);
       buzz(30);
+      play("go");
     }, ctx.round.prompt.delay ?? 3000);
     return () => clearTimeout(t);
     // Restart only when a new round goes live.

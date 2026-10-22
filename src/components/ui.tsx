@@ -6,6 +6,7 @@ import { coupleBg, coupleBorder, coupleText, coupleTint, delay } from "@/lib/col
 import { CoupleAvatar } from "./CoupleAvatar";
 import { Check, Hourglass } from "./art";
 import { buzz } from "@/lib/ux";
+import { play } from "@/lib/sound";
 
 // Big prompt card at the top of every game screen.
 export function PromptCard({ kicker, children }: { kicker?: string; children: React.ReactNode }) {
@@ -161,6 +162,10 @@ export function useCountdown(seconds: number, startKey: string | null) {
 
 export function Clock({ left, total }: { left: number; total: number }) {
   const pct = (left / total) * 100;
+  useEffect(() => {
+    if (left > 0 && left <= 5) play("tick");
+    else if (left === 0) play("buzzer");
+  }, [left]);
   return (
     <div className="flex flex-col items-center gap-2">
       {/* Pop only in the last 5 seconds, so the number doesn't flicker every tick. */}

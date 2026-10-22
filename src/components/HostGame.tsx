@@ -8,7 +8,7 @@ import type { GameDef } from "@/games/types";
 import { coupleText, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
 import { supabase } from "@/lib/supabase";
-import { Dice } from "./art";
+import { Dice, Trophy } from "./art";
 
 type RoomData = { couples: Couple[]; players: Player[]; online: Set<string> };
 
@@ -24,7 +24,7 @@ export function GamePicker({ room }: { room: RoomData }) {
   // Flick through the games for a second, then land on one.
   function random() {
     if (spinning) return;
-    const order = [...GAMES].sort(() => Math.random() - 0.5);
+    const order = GAMES.filter((g) => g.kind !== "finale").sort(() => Math.random() - 0.5);
     let i = 0;
     const id = setInterval(() => {
       setSpinning(order[i % order.length].id);
@@ -74,6 +74,13 @@ export function GamePicker({ room }: { room: RoomData }) {
       </button>
       {section("social", "משחקים חברתיים")}
       {section("mini", "מיני משחקים")}
+      <button
+        onClick={() => go(GAMES.find((g) => g.kind === "finale")!)}
+        className="mt-2 flex items-center justify-center gap-3 rounded-2xl border-2 border-sun/60 bg-sun/10 py-4 text-xl font-black text-sun active:scale-95"
+      >
+        <Trophy className="size-8" />
+        סיום הערב: פודיום
+      </button>
     </div>
   );
 }
@@ -124,7 +131,7 @@ export function HostGame({ round, answers, room }: { round: Round; answers: Answ
         </button>
       )}
 
-      {round.phase === "reveal" && (
+      {round.phase === "reveal" && def.kind !== "finale" && (
         <div className="card flex animate-rise flex-col gap-2 rounded-2xl p-4">
           {def.score ? (
             <>
@@ -157,7 +164,7 @@ export function HostGame({ round, answers, room }: { round: Round; answers: Answ
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid grid-cols-2 gap-2 ${def.kind === "finale" ? "hidden" : ""}`}>
         <button onClick={next} disabled={busy} className="rounded-2xl bg-white/10 py-3 font-black active:scale-95">
           {round.phase === "reveal" ? "סיבוב הבא ←" : "דלג על הסיבוב"}
         </button>

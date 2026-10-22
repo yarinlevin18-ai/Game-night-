@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getMe, clearMe, type Me } from "@/lib/session";
 import { ROOM } from "@/lib/room";
@@ -11,6 +11,8 @@ import { CoupleAvatar } from "@/components/CoupleAvatar";
 import { Scoreboard } from "@/components/Scoreboard";
 import { useRoom, type Conn } from "@/lib/useRoom";
 import { useGame } from "@/lib/game";
+import { play } from "@/lib/sound";
+import { SoundToggle } from "@/components/SoundToggle";
 import { gameById } from "@/games";
 
 export default function Play() {
@@ -27,6 +29,23 @@ export default function Play() {
   });
 
   const { round, answers } = useGame();
+
+  // Sound cues: new round, reveal, my couple scoring.
+  const seen = useRef<{ round?: string | null; phase?: string; score?: number }>({});
+  useEffect(() => {
+    const s = seen.current;
+    const id = round?.id ?? null;
+    if (s.round !== undefined && id && id !== s.round) play("whoosh");
+    else if (id && id === s.round && round?.phase === "reveal" && s.phase !== "reveal" && round.game !== "finale") play("reveal");
+    s.round = id;
+    s.phase = round?.phase;
+  }, [round?.id, round?.phase, round?.game]);
+  const myScore = couples.find((c) => c.id === me?.coupleId)?.score;
+  useEffect(() => {
+    const s = seen.current;
+    if (myScore !== undefined && s.score !== undefined && myScore > s.score) play("ding");
+    s.score = myScore;
+  }, [myScore]);
 
   useEffect(() => {
     const m = getMe(ROOM);
@@ -65,15 +84,18 @@ export default function Play() {
             <def.Icon className="size-7" />
             {def.title}
           </span>
-          {mine && (
-            <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold ${coupleTint[mine.idx]} ${coupleText[mine.idx]}`}>
-              <CoupleAvatar idx={mine.idx} className="size-5" badge={false} />
-              {mine.score}
-            </span>
-          )}
+          <span className="flex items-center gap-2">
+            {mine && (
+              <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold ${coupleTint[mine.idx]} ${coupleText[mine.idx]}`}>
+                <CoupleAvatar idx={mine.idx} className="size-5" badge={false} />
+                {mine.score}
+              </span>
+            )}
+            <SoundToggle />
+          </span>
         </div>
         <def.Player key={round.id} round={round} answers={answers} couples={couples} players={players} online={online} meId={me.playerId} />
-        {round.phase === "reveal" && (
+        {round.phase === "reveal" && def.kind !== "finale" && (
           <section className="mt-2 flex animate-rise flex-col gap-2 [animation-delay:600ms]">
             <h2 className="font-bold">טבלת הניקוד</h2>
             <Scoreboard couples={couples} mineId={me.coupleId} />
@@ -102,7 +124,10 @@ export default function Play() {
       )}
 
       <div className="flex justify-end">
-        <ConnDot conn={conn} />
+        <span className="flex items-center gap-3">
+          <ConnDot conn={conn} />
+          <SoundToggle />
+        </span>
       </div>
 
       <header className="-mt-2 text-center">

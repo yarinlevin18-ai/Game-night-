@@ -10,6 +10,7 @@ import { Scoreboard } from "@/components/Scoreboard";
 import { Trophy } from "@/components/art";
 import { GamePicker, HostGame } from "@/components/HostGame";
 import { useGame } from "@/lib/game";
+import { SoundToggle } from "@/components/SoundToggle";
 
 const HOST_KEY = "cn:host";
 type Ev = { id: number; couple_id: string; delta: number; reason: string | null; created_at: string };
@@ -140,6 +141,7 @@ function Console() {
         <span className="flex items-center gap-1.5 text-sm text-mute">
           <span className={`size-2.5 rounded-full ${conn === "live" ? "bg-c4" : conn === "down" ? "bg-pop" : "bg-sun"}`} />
           {here}/{players.length || 8} מחוברים
+          <SoundToggle />
         </span>
       </header>
 

@@ -63,6 +63,10 @@
   20% { opacity: 1; transform: translateY(0) scale(1.15); }
   100% { opacity: 0; transform: translateY(-22px) scale(1); }
 }
+@keyframes confetti {
+  0% { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(var(--dx), 110vh) rotate(var(--rot)); opacity: 0.9; }
+}
 @keyframes blob {
   0% { transform: translate(0, 0) scale(1); }
   50% { transform: translate(12vw, 8vh) scale(1.25); }
