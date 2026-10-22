@@ -85,7 +85,7 @@ export function GamePicker({ room }: { room: RoomData }) {
   );
 }
 
-export function HostGame({ round, answers, room }: { round: Round; answers: Answer[]; room: RoomData }) {
+export function HostGame({ round, answers, room, meId }: { round: Round; answers: Answer[]; room: RoomData; meId?: string }) {
   const def = gameById(round.game);
   const [busy, setBusy] = useState(false);
   if (!def) return null;
@@ -119,7 +119,15 @@ export function HostGame({ round, answers, room }: { round: Round; answers: Answ
         </button>
       </div>
 
-      <def.Host {...ctx} />
+      {meId ? (
+        <>
+          <def.Player key={round.id} {...ctx} meId={meId} />
+          {round.phase !== "reveal" && <AnsweredCount answers={answers} total={room.players.length} />}
+        </>
+      ) : (
+        <def.Host {...ctx} />
+      )}
+      {def.Controls && <def.Controls {...ctx} />}
 
       {step && (
         <button
@@ -202,5 +210,16 @@ function ManualAward({ round, couple }: { round: Round; couple?: Couple }) {
         ))}
       </div>
     </>
+  );
+}
+
+// Spoiler-free progress for a host who is also playing.
+function AnsweredCount({ answers, total }: { answers: Answer[]; total: number }) {
+  const n = new Set(answers.map((a) => a.player_id)).size;
+  if (!n) return null;
+  return (
+    <p className="text-center text-sm text-mute">
+      {n}/{total} כבר שלחו משהו
+    </p>
   );
 }

@@ -189,3 +189,18 @@ export const closest: { q: string; answer: number | null; unit?: string }[] = [
   { q: "כמה זמן ינאי ועומר ביחד?", answer: null, unit: "חודשים" },
   { q: "כמה הודעות נשלחו היום בקבוצת הוואטסאפ?", answer: null },
 ];
+
+// המתחזה: everyone gets the word, the imposter only gets the category.
+export const imposter: { word: string; cat: string }[] = [
+  { word: "פיצה", cat: "אוכל" }, { word: "סושי", cat: "אוכל" }, { word: "שקשוקה", cat: "אוכל" }, { word: "במבה", cat: "אוכל" },
+  { word: "פלאפל", cat: "אוכל" }, { word: "המבורגר", cat: "אוכל" }, { word: "אבטיח", cat: "אוכל" }, { word: "גלידה", cat: "אוכל" },
+  { word: "אילת", cat: "מקום" }, { word: "פריז", cat: "מקום" }, { word: "חדר כושר", cat: "מקום" }, { word: "סופרמרקט", cat: "מקום" },
+  { word: "שדה תעופה", cat: "מקום" }, { word: "בית חולים", cat: "מקום" }, { word: "ים המלח", cat: "מקום" }, { word: "קולנוע", cat: "מקום" },
+  { word: "חתונה", cat: "אירוע" }, { word: "יום הולדת", cat: "אירוע" }, { word: "ליל הסדר", cat: "אירוע" }, { word: "מילואים", cat: "אירוע" },
+  { word: "כלב", cat: "חיה" }, { word: "חתול", cat: "חיה" }, { word: "פינגווין", cat: "חיה" }, { word: "ג'ירפה", cat: "חיה" },
+  { word: "דולפין", cat: "חיה" }, { word: "תוכי", cat: "חיה" }, { word: "מקרר", cat: "חפץ בבית" }, { word: "מכונת כביסה", cat: "חפץ בבית" },
+  { word: "ספה", cat: "חפץ בבית" }, { word: "מטריה", cat: "חפץ" }, { word: "מברשת שיניים", cat: "חפץ" }, { word: "שעון מעורר", cat: "חפץ" },
+  { word: "רופא שיניים", cat: "מקצוע" }, { word: "שף", cat: "מקצוע" }, { word: "טייס", cat: "מקצוע" }, { word: "גנן", cat: "מקצוע" },
+  { word: "כדורגל", cat: "ספורט" }, { word: "טניס", cat: "ספורט" }, { word: "יוגה", cat: "ספורט" }, { word: "גלישה", cat: "ספורט" },
+  { word: "הארי פוטר", cat: "סרט / סדרה" }, { word: "חברים", cat: "סרט / סדרה" }, { word: "שובר שורות", cat: "סרט / סדרה" }, { word: "מלך האריות", cat: "סרט / סדרה" },
+];

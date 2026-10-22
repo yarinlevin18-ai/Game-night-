@@ -14,6 +14,8 @@ export type GameDef = {
   start: (room: Room) => { prompt: Prompt; subject?: string | null; phase?: Phase };
   Player: FC<Ctx>;
   Host: FC<Ctx>;
+  // Host-only inputs with no spoilers (shown even when the host is also playing).
+  Controls?: FC<Ctx>;
   // Host's "next" button per phase. `ready` gates it (e.g. wait for the subject's statement).
   flow: Partial<Record<Phase, { next: Phase; label: string; ready?: (ctx: Ctx) => boolean }>>;
   // Points suggested at reveal; host confirms. Omit for manual scoring.

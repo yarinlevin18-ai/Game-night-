@@ -128,7 +128,6 @@ export const truth: GameDef = {
     return (
       <div className="flex flex-col gap-4">
         <PromptCard kicker={`התור של ${name}`}>{stmt ? `“${stmt.text}”` : "כותב/ת…"}</PromptCard>
-        {stmt && <p className="text-center text-sm text-mute">רק את/ה רואה: {stmt.truth ? "אמת" : "שקר"}</p>}
         {ctx.round.phase === "guess" && <Progress n={byKind(ctx.answers, "vote").length} of={ctx.players.length - 1} />}
       </div>
     );

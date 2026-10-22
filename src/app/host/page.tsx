@@ -10,6 +10,8 @@ import { Scoreboard } from "@/components/Scoreboard";
 import { Trophy } from "@/components/art";
 import { GamePicker, HostGame } from "@/components/HostGame";
 import { useGame } from "@/lib/game";
+import { clearMe, getMe, setMe, type Me } from "@/lib/session";
+import type { Player } from "@/lib/supabase";
 import { SoundToggle } from "@/components/SoundToggle";
 
 const HOST_KEY = "cn:host";
@@ -91,6 +93,14 @@ function Console() {
   const { couples, players, online, conn } = useRoom({});
   const { round, answers } = useGame();
   const room = { couples, players, online };
+  // The host usually plays too; this phone's player identity (shared with /play).
+  const [me, setMeState] = useState<Me | null>(null);
+  useEffect(() => setMeState(getMe(ROOM)), []);
+  const pickMe = (p: Player | null) => {
+    if (p) setMe(ROOM, { playerId: p.id, name: p.name, coupleId: p.couple_id });
+    else clearMe(ROOM);
+    setMeState(getMe(ROOM));
+  };
   const [events, setEvents] = useState<Ev[]>([]);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -145,7 +155,8 @@ function Console() {
         </span>
       </header>
 
-      {round ? <HostGame round={round} answers={answers} room={room} /> : <GamePicker room={room} />}
+      {!round && <WhoAmI me={me} players={players} onPick={pickMe} />}
+      {round ? <HostGame round={round} answers={answers} room={room} meId={me?.playerId} /> : <GamePicker room={room} />}
 
       <section className="flex flex-col gap-2">
         <h2 className="font-bold">ניקוד (ידני)</h2>
@@ -207,6 +218,50 @@ function Console() {
           איפוס ניקוד
         </button>
       )}
+    </div>
+  );
+}
+
+// "I'm playing too" picker, so the host answers from this same phone without seeing secrets.
+function WhoAmI({ me, players, onPick }: { me: Me | null; players: Player[]; onPick: (p: Player | null) => void }) {
+  const [open, setOpen] = useState(false);
+  if (me && !open)
+    return (
+      <p className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-2 text-sm">
+        <span>
+          משחק/ת גם בתור <b>{me.name}</b>. המסך לא יראה לך סודות
+        </span>
+        <button onClick={() => setOpen(true)} className="font-bold text-mute underline">
+          החלף
+        </button>
+      </p>
+    );
+  return (
+    <div className="card flex flex-col gap-2 rounded-2xl p-3">
+      <p className="text-sm font-bold">משחק/ת גם? מי את/ה (כדי שהמסך לא יגלה לך תשובות)</p>
+      <div className="flex flex-wrap gap-1.5">
+        {players.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => {
+              onPick(p);
+              setOpen(false);
+            }}
+            className={`rounded-full px-3 py-1.5 text-sm font-bold active:scale-95 ${me?.playerId === p.id ? "bg-sun text-bg" : "bg-white/10"}`}
+          >
+            {p.name}
+          </button>
+        ))}
+        <button
+          onClick={() => {
+            onPick(null);
+            setOpen(false);
+          }}
+          className="rounded-full bg-white/5 px-3 py-1.5 text-sm text-mute"
+        >
+          רק מנחה/ת
+        </button>
+      </div>
     </div>
   );
 }

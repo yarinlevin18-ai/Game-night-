@@ -59,6 +59,17 @@ export const closest: GameDef = {
         .map((r, i) => ({ coupleId: coupleOf(ctx, r.id)?.id ?? "", delta: 3 - i, reason: "הכי קרוב" }))
         .filter((a) => a.coupleId),
     ),
+  // Group questions have no stored answer: the host types it (after guessing, if playing).
+  Controls: (ctx) => {
+    const { answer, unit } = ctx.round.prompt;
+    if (ctx.round.phase !== "open" || (answer !== null && answer !== undefined)) return null;
+    return (
+      <div className="card flex flex-col gap-2 rounded-2xl p-3">
+        <p className="text-center font-bold text-sun">מנחה: הקלד/י את התשובה הנכונה</p>
+        <NumberPad unit={unit} onSubmit={(n) => updateRound(ctx.round.id, { prompt: { ...ctx.round.prompt, answer: n } })} />
+      </div>
+    );
+  },
   Player: (ctx) => {
     const { q, unit } = ctx.round.prompt;
     if (ctx.round.phase === "reveal")
@@ -77,22 +88,12 @@ export const closest: GameDef = {
     );
   },
   Host: (ctx) => {
-    const { q, answer, unit } = ctx.round.prompt;
+    const { q } = ctx.round.prompt;
     if (ctx.round.phase === "reveal") return <Board {...ctx} />;
     return (
       <div className="flex flex-col gap-4">
         <PromptCard>{q}</PromptCard>
         <Progress n={byKind(ctx.answers, "num").length} of={ctx.players.length} label="ניחשו" />
-        {answer === null || answer === undefined ? (
-          <div className="flex flex-col gap-2">
-            <p className="text-center font-bold text-sun">הקלד/י את התשובה הנכונה (רק את/ה רואה)</p>
-            <NumberPad unit={unit} onSubmit={(n) => updateRound(ctx.round.id, { prompt: { ...ctx.round.prompt, answer: n } })} />
-          </div>
-        ) : (
-          <p className="text-center text-sm text-mute">
-            תשובה: {answer} {unit}
-          </p>
-        )}
       </div>
     );
   },
