@@ -9,6 +9,7 @@ import { coupleText, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
 import { supabase } from "@/lib/supabase";
 import { Dice, Trophy } from "./art";
+import { RulesButton } from "./Rules";
 
 type RoomData = { couples: Couple[]; players: Player[]; online: Set<string> };
 
@@ -116,6 +117,7 @@ export function HostGame({ round, answers, room, meId }: { round: Round; answers
       <div className="flex items-center justify-between">
         <span className="flex items-center gap-2 text-xl font-black">
           <def.Icon className="size-8" /> {def.title}
+          <RulesButton key={def.id} def={def} autoOpen={!!meId} />
         </span>
         <button onClick={() => act(endGame)} className="rounded-full bg-white/10 px-3 py-1.5 text-sm font-bold active:scale-95">
           ✕ לתפריט

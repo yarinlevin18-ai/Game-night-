@@ -13,6 +13,7 @@ import { useRoom, type Conn } from "@/lib/useRoom";
 import { useGame } from "@/lib/game";
 import { play } from "@/lib/sound";
 import { SoundToggle } from "@/components/SoundToggle";
+import { RulesButton } from "@/components/Rules";
 import { gameById } from "@/games";
 
 export default function Play() {
@@ -91,6 +92,7 @@ export default function Play() {
                 <span dir="ltr">{mine.score}</span>
               </span>
             )}
+            <RulesButton key={def.id} def={def} autoOpen />
             <SoundToggle />
           </span>
         </div>
