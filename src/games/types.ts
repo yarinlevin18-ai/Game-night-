@@ -8,7 +8,7 @@ export type GameDef = {
   id: string;
   title: string;
   blurb: string;
-  kind: "social" | "mini" | "finale";
+  kind: "social" | "mini" | "team" | "finale";
   Icon: FC<{ className?: string }>;
   // Host: build the next round.
   start: (room: Room) => { prompt: Prompt; subject?: string | null; phase?: Phase };

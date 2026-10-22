@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Couple, Player } from "@/lib/supabase";
 import { advance, claimAward, endGame, giveAwards, startRound, type Answer, type Round } from "@/lib/game";
 import { gameById, GAMES } from "@/games";
@@ -10,6 +10,7 @@ import { buzz } from "@/lib/ux";
 import { supabase } from "@/lib/supabase";
 import { Dice, Trophy } from "./art";
 import { RulesButton } from "./Rules";
+import { getTeams, shuffleTeams, TEAM_META, type TeamId, type Teams } from "@/lib/teams";
 
 type RoomData = { couples: Couple[]; players: Player[]; online: Set<string> };
 
@@ -75,6 +76,8 @@ export function GamePicker({ room }: { room: RoomData }) {
       </button>
       {section("social", "משחקים חברתיים")}
       {section("mini", "מיני משחקים")}
+      <TeamsPanel couples={room.couples} />
+      {section("team", "משחקי קבוצות")}
       <button
         onClick={() => go(GAMES.find((g) => g.kind === "finale")!)}
         className="mt-2 flex items-center justify-center gap-3 rounded-2xl border-2 border-sun/60 bg-sun/10 py-4 text-xl font-black text-sun active:scale-95"
@@ -225,5 +228,47 @@ function AnsweredCount({ answers, total }: { answers: Answer[]; total: number })
     <p className="text-center text-sm text-mute">
       {n}/{total} כבר שלחו משהו
     </p>
+  );
+}
+
+// Current mixed teams (two couples each) + reshuffle.
+function TeamsPanel({ couples }: { couples: Couple[] }) {
+  const [teams, setTeams] = useState<Teams | null>(null);
+  const [spin, setSpin] = useState(0);
+  useEffect(() => {
+    if (couples.length) setTeams(getTeams(couples));
+  }, [couples]);
+  if (!teams) return null;
+  return (
+    <section className="card flex flex-col gap-2 rounded-2xl p-3">
+      <div className="flex items-center justify-between">
+        <h2 className="font-bold">הקבוצות עכשיו</h2>
+        <button
+          onClick={() => {
+            buzz(20);
+            setTeams(shuffleTeams(couples));
+            setSpin((s) => s + 1);
+          }}
+          className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm font-black active:scale-95"
+        >
+          <Dice className={`size-5 ${spin ? "animate-wiggle" : ""}`} key={spin} /> ערבוב קבוצות
+        </button>
+      </div>
+      <div key={spin} className="grid grid-cols-2 gap-2">
+        {(["A", "B"] as TeamId[]).map((t, i) => (
+          <div key={t} className={`animate-pop rounded-xl p-2 text-center ${TEAM_META[t].tint}`} style={delay(i, 120)}>
+            <p className={`text-sm font-black ${TEAM_META[t].text}`}>{TEAM_META[t].name}</p>
+            {teams[t].map((id) => {
+              const c = couples.find((x) => x.id === id);
+              return c ? (
+                <p key={id} className={`text-sm font-bold ${coupleText[c.idx]}`}>
+                  {c.name}
+                </p>
+              ) : null;
+            })}
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }

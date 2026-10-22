@@ -8,6 +8,7 @@ import { CoupleAvatar } from "@/components/CoupleAvatar";
 import { coupleText, coupleTint } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
 import type { GameDef, Room } from "./types";
+import { getTeams, TEAM_META, type TeamId } from "@/lib/teams";
 
 // Turn games: one player ("giver") works through a deck for 60s; their couple scores +1 per hit.
 //  taboo:    giver explains without the forbidden words; partner guesses. Everyone else sees the card (to catch cheating).
@@ -54,11 +55,14 @@ function CardFace({ mode, card, big }: { mode: Mode; card: unknown; big?: boolea
 
 function Turn(ctx: Ctx & { host?: boolean }) {
   const { giverId, mode, n, hits, cur } = turnState(ctx);
-  const couple = ctx.couples.find((c) => c.id === ctx.round.prompt.coupleId);
+  const side: string[] = ctx.round.prompt.coupleIds ?? [ctx.round.prompt.coupleId];
+  const team = ctx.round.prompt.team as TeamId | undefined;
+  const couple = ctx.couples.find((c) => c.id === (team ? ctx.players.find((p) => p.id === giverId)?.couple_id : side[0]));
   const running = ctx.round.phase === "guess";
   const left = useCountdown(SECONDS, running ? ctx.round.id : null, ctx.round.prompt.startedAt);
   const isGiver = ctx.meId === giverId;
-  const isPartner = !isGiver && ctx.players.find((p) => p.id === ctx.meId)?.couple_id === couple?.id;
+  // "Partner" = anyone guessing on the giver's side (the partner, or the whole team in team mode).
+  const isPartner = !isGiver && side.includes(ctx.players.find((p) => p.id === ctx.meId)?.couple_id ?? "");
   const giver = playerName(ctx, giverId);
   const over = running && left === 0;
 
@@ -68,7 +72,14 @@ function Turn(ctx: Ctx & { host?: boolean }) {
     submit(ctx.round.id, giverId, `${hit ? "hit" : "skip"}-${n}`, hit ? "1" : "0");
   };
 
-  const header = couple && (
+  const header = team ? (
+    <div className={`mx-auto flex animate-pop flex-col items-center rounded-2xl px-4 py-2 text-center ${TEAM_META[team].tint}`}>
+      <span className={`text-lg font-black ${TEAM_META[team].text}`}>{TEAM_META[team].name}</span>
+      <span className="text-sm font-bold">
+        {mode === "headsup" ? `${giver} מנחש/ת, הקבוצה נותנת רמזים` : `${giver} ${mode === "taboo" ? "מסביר/ה" : "מציג/ה"} לקבוצה`}
+      </span>
+    </div>
+  ) : couple && (
     <div className={`mx-auto flex animate-pop items-center gap-2 rounded-full px-4 py-2 text-lg font-black ${coupleTint[couple.idx]} ${coupleText[couple.idx]}`}>
       <CoupleAvatar idx={couple.idx} className="size-7" badge={false} />
       {mode === "headsup" ? `${giver} מנחש/ת` : `${giver} ${mode === "taboo" ? "מסביר/ה" : "מציג/ה"}`}
@@ -98,7 +109,7 @@ function Turn(ctx: Ctx & { host?: boolean }) {
               : "את/ה בתור! כשהמנחה מתחיל/ה, הקלף יופיע אצלך"
             : isPartner
               ? `אתם מנחשים! תקשיבו ל${giver}`
-              : `התור של ${couple?.name}. ${mode === "taboo" ? "תשמרו שלא אומרים מילה אסורה!" : "תיהנו מההצגה"}`}
+              : `התור של ${team ? TEAM_META[team].name : couple?.name}. ${mode === "taboo" ? "תשמרו שלא אומרים מילה אסורה!" : "תיהנו מההצגה"}`}
         </PromptCard>
       </div>
     );
@@ -172,21 +183,44 @@ function nextTurn(room: Room, mode: Mode) {
   return { coupleId: couple.id, giverId: members[idx]?.id ?? members[0]?.id };
 }
 
-function make(mode: Mode, Icon: GameDef["Icon"], blurb: string): GameDef {
+// Team turn: teams alternate; within a team the giver rotates over its (present) players.
+function nextTeamTurn(room: Room, mode: Mode) {
+  const teams = getTeams(room.couples);
+  const tKey = `cn:teamturn:${mode}`;
+  let last: TeamId = "B";
+  try {
+    last = (localStorage.getItem(tKey) as TeamId) ?? "B";
+  } catch {}
+  const team: TeamId = last === "A" ? "B" : "A";
+  const here = present(room.players, room.online);
+  const all = room.players.filter((p) => teams[team].includes(p.couple_id));
+  const members = all.filter((p) => here.includes(p)).length ? all.filter((p) => here.includes(p)) : all;
+  const gKey = `cn:teamgiver:${mode}:${team}`;
+  let g = -1;
+  try {
+    g = Number(localStorage.getItem(gKey) ?? -1);
+    localStorage.setItem(tKey, team);
+    localStorage.setItem(gKey, String((g + 1) % Math.max(1, members.length)));
+  } catch {}
+  return { team, coupleIds: teams[team], giverId: members[(g + 1) % Math.max(1, members.length)]?.id ?? members[0]?.id };
+}
+
+function make(mode: Mode, Icon: GameDef["Icon"], blurb: string, teamMode = false): GameDef {
   return {
-    id: mode,
-    title: titles[mode],
+    id: teamMode ? `team-${mode}` : mode,
+    title: teamMode ? `${titles[mode]} קבוצות` : titles[mode],
     blurb,
-    kind: "mini",
+    kind: teamMode ? "team" : "mini",
     Icon,
-    start: (room) => ({ prompt: { mode, deck: deckFor(mode), ...nextTurn(room, mode) } }),
+    start: (room) => ({ prompt: { mode, deck: deckFor(mode), ...(teamMode ? nextTeamTurn(room, mode) : nextTurn(room, mode)) } }),
     flow: {
       open: { next: "guess", label: `התחל (${SECONDS} שנ׳)` },
       guess: { next: "reveal", label: "סיום תור" },
     },
     score: (ctx) => {
       const { hits } = turnState(ctx);
-      return hits.length ? [{ coupleId: ctx.round.prompt.coupleId, delta: hits.length, reason: titles[mode] }] : [];
+      const side: string[] = ctx.round.prompt.coupleIds ?? [ctx.round.prompt.coupleId];
+      return hits.length ? side.map((coupleId) => ({ coupleId, delta: hits.length, reason: titles[mode] })) : [];
     },
     Player: (ctx) => <Turn {...ctx} />,
     Host: (ctx) => <Turn {...ctx} host />,
@@ -196,3 +230,7 @@ function make(mode: Mode, Icon: GameDef["Icon"], blurb: string): GameDef {
 export const taboo = make("taboo", Card, "מסבירים מילה בלי המילים האסורות. 60 שניות");
 export const charades = make("charades", Sparkle, "מציגים בלי מילים, בן/בת הזוג מנחשים. 60 שניות");
 export const headsup = make("headsup", Glass, "טלפון על המצח, בן/בת הזוג נותנים רמזים. 60 שניות");
+
+export const teamTaboo = make("taboo", Card, "קבוצות מעורבבות: מסבירים לקבוצה בלי המילים האסורות", true);
+export const teamCharades = make("charades", Sparkle, "קבוצות מעורבבות: מציגים לקבוצה בלי מילים", true);
+export const teamHeadsup = make("headsup", Glass, "קבוצות מעורבבות: טלפון על המצח, כל הקבוצה נותנת רמזים", true);
