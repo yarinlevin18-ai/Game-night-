@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #1a1033;
+  --color-card: #2a1b4d;
+  --color-line: #3d2a6b;
+  --color-ink: #f6f1ff;
+  --color-mute: #b9a8e0;
+  --color-pop: #ff4f8b;
+  --color-sun: #ffc93c;
+  --color-c1: #ff4f8b;
+  --color-c2: #3cc8ff;
+  --color-c3: #ffc93c;
+  --color-c4: #6ee7a8;
+}
+
+body {
+  background: radial-gradient(circle at 50% -20%, #3b1f6e, var(--color-bg) 60%) fixed;
+  color: var(--color-ink);
+}
