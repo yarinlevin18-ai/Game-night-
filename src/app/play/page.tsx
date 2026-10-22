@@ -10,6 +10,8 @@ import { Hourglass, Sparkle } from "@/components/art";
 import { CoupleAvatar } from "@/components/CoupleAvatar";
 import { Scoreboard } from "@/components/Scoreboard";
 import { useRoom, type Conn } from "@/lib/useRoom";
+import { useGame } from "@/lib/game";
+import { gameById } from "@/games";
 
 export default function Play() {
   const router = useRouter();
@@ -23,6 +25,8 @@ export default function Play() {
       buzz(15);
     },
   });
+
+  const { round, answers } = useGame();
 
   useEffect(() => {
     const m = getMe(ROOM);
@@ -51,6 +55,34 @@ export default function Play() {
 
   if (!me) return null;
   const mine = couples.find((c) => c.id === me.coupleId);
+
+  const def = round ? gameById(round.game) : undefined;
+  if (round && def) {
+    return (
+      <div className="flex flex-col gap-4 pt-1 pb-10">
+        <div className="flex items-center justify-between">
+          <span className="flex animate-rise items-center gap-2 text-lg font-black">
+            <def.Icon className="size-7" />
+            {def.title}
+          </span>
+          {mine && (
+            <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold ${coupleTint[mine.idx]} ${coupleText[mine.idx]}`}>
+              <CoupleAvatar idx={mine.idx} className="size-5" badge={false} />
+              {mine.score}
+            </span>
+          )}
+        </div>
+        <def.Player key={round.id} round={round} answers={answers} couples={couples} players={players} online={online} meId={me.playerId} />
+        {round.phase === "reveal" && (
+          <section className="mt-2 flex animate-rise flex-col gap-2 [animation-delay:600ms]">
+            <h2 className="font-bold">טבלת הניקוד</h2>
+            <Scoreboard couples={couples} mineId={me.coupleId} />
+          </section>
+        )}
+        {conn !== "live" && <p className="text-center text-xs text-pop">מתחבר מחדש…</p>}
+      </div>
+    );
+  }
   const total = players.length || 8;
   const here = players.filter((p) => online.has(p.id)).length;
 

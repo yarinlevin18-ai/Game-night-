@@ -8,6 +8,8 @@ import { buzz } from "@/lib/ux";
 import { coupleText } from "@/lib/colors";
 import { Scoreboard } from "@/components/Scoreboard";
 import { Trophy } from "@/components/art";
+import { GamePicker, HostGame } from "@/components/HostGame";
+import { useGame } from "@/lib/game";
 
 const HOST_KEY = "cn:host";
 type Ev = { id: number; couple_id: string; delta: number; reason: string | null; created_at: string };
@@ -86,6 +88,8 @@ function PinGate({ onOk }: { onOk: () => void }) {
 
 function Console() {
   const { couples, players, online, conn } = useRoom({});
+  const { round, answers } = useGame();
+  const room = { couples, players, online };
   const [events, setEvents] = useState<Ev[]>([]);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -139,8 +143,10 @@ function Console() {
         </span>
       </header>
 
+      {round ? <HostGame round={round} answers={answers} room={room} /> : <GamePicker room={room} />}
+
       <section className="flex flex-col gap-2">
-        <h2 className="font-bold">ניקוד</h2>
+        <h2 className="font-bold">ניקוד (ידני)</h2>
         <Scoreboard couples={couples}>
           {(c) => (
             <div className="flex gap-1.5" dir="ltr">

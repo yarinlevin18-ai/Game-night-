@@ -1,0 +1,11 @@
+import { likely } from "./likely";
+import { know } from "./know";
+import { truth } from "./truth";
+import { challenge } from "./challenge";
+import { fastest } from "./fastest";
+import { closest } from "./closest";
+import { taboo, charades, headsup } from "./cards";
+import type { GameDef } from "./types";
+
+export const GAMES: GameDef[] = [likely, know, truth, challenge, fastest, closest, taboo, charades, headsup];
+export const gameById = (id: string | null | undefined) => GAMES.find((g) => g.id === id);
