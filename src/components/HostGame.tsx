@@ -127,6 +127,14 @@ export function HostGame({ round, answers, room, meId }: { round: Round; answers
         </button>
       </div>
 
+      {round.prompt.turnNo && round.prompt.turnsTotal && (
+        <p className={`rounded-xl px-3 py-2 text-center text-sm font-bold ${round.prompt.turnNo < round.prompt.turnsTotal ? "bg-sun/15 text-sun" : "bg-c4/15 text-c4"}`}>
+          תור {round.prompt.turnNo} מתוך {round.prompt.turnsTotal}
+          {round.prompt.turnNo < round.prompt.turnsTotal
+            ? ` · כדי שיהיה הוגן, תנו ל${round.prompt.team ? "קבוצה השנייה" : "כל הזוגות"} תור לפני שעוברים משחק`
+            : " · הסבב הושלם, כולם שיחקו ✓"}
+        </p>
+      )}
       {meId ? (
         <>
           <def.Player key={round.id} {...ctx} meId={meId} onHost />

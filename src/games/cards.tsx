@@ -16,6 +16,8 @@ import { getTeams, TEAM_META, type TeamId } from "@/lib/teams";
 //  headsup:  giver holds the phone on their forehead (screen out); partner hints. Tap right half = got it, left = skip.
 type Mode = "taboo" | "charades" | "headsup";
 const SECONDS = 60;
+// Balance: 1 point per 2 hits (rounded up), so a 60s turn is worth about one round of the other games.
+export const turnPoints = (hits: number) => Math.ceil(hits / 2);
 
 type TabooCard = { word: string; no: string[] };
 const deckFor = (mode: Mode) =>
@@ -94,6 +96,9 @@ function Turn(ctx: Ctx & { host?: boolean }) {
         <div className="animate-pop rounded-3xl bg-c4 py-6 text-center text-bg">
           <p className="text-6xl font-black">{hits.length}</p>
           <p className="font-bold">ניחושים נכונים</p>
+          <p className="mt-1 text-lg font-black" dir="rtl">
+            = <bdi dir="ltr">+{turnPoints(hits.length)}</bdi> {team ? "לכל זוג בקבוצה" : "לזוג"}
+          </p>
         </div>
       </div>
     );
@@ -180,7 +185,11 @@ function nextTurn(room: Room, mode: Mode) {
   try {
     localStorage.setItem(key, String(idx));
   } catch {}
-  return { coupleId: couple.id, giverId: members[idx]?.id ?? members[0]?.id };
+  let turnNo = 1;
+  try {
+    turnNo = JSON.parse(localStorage.getItem(`cn:used:${mode}-couple`) ?? "[]").length || 1;
+  } catch {}
+  return { coupleId: couple.id, giverId: members[idx]?.id ?? members[0]?.id, turnNo, turnsTotal: couples.length || room.couples.length };
 }
 
 // Team turn: teams alternate; within a team the giver rotates over its (present) players.
@@ -202,7 +211,7 @@ function nextTeamTurn(room: Room, mode: Mode) {
     localStorage.setItem(tKey, team);
     localStorage.setItem(gKey, String((g + 1) % Math.max(1, members.length)));
   } catch {}
-  return { team, coupleIds: teams[team], giverId: members[(g + 1) % Math.max(1, members.length)]?.id ?? members[0]?.id };
+  return { team, coupleIds: teams[team], giverId: members[(g + 1) % Math.max(1, members.length)]?.id ?? members[0]?.id, turnNo: team === "A" ? 1 : 2, turnsTotal: 2 };
 }
 
 function make(mode: Mode, Icon: GameDef["Icon"], blurb: string, teamMode = false): GameDef {
@@ -220,7 +229,8 @@ function make(mode: Mode, Icon: GameDef["Icon"], blurb: string, teamMode = false
     score: (ctx) => {
       const { hits } = turnState(ctx);
       const side: string[] = ctx.round.prompt.coupleIds ?? [ctx.round.prompt.coupleId];
-      return hits.length ? side.map((coupleId) => ({ coupleId, delta: hits.length, reason: titles[mode] })) : [];
+      const pts = turnPoints(hits.length);
+      return pts ? side.map((coupleId) => ({ coupleId, delta: pts, reason: titles[mode] })) : [];
     },
     Player: (ctx) => <Turn {...ctx} />,
     Host: (ctx) => <Turn {...ctx} host />,
