@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { imposter as bank } from "@/content/bank";
-import { byKind, coupleOf, draw, mineOf, pick, playerName, submit, updateRound, type Ctx } from "@/lib/game";
+import { byKind, coupleOf, draw, mineOf, pick, playerName, present, submit, updateRound, type Ctx } from "@/lib/game";
 import { Bars, coupleColor, PlayerPicker, PromptCard, Waiting } from "@/components/ui";
 import { Glass } from "@/components/art";
 import { buzz } from "@/lib/ux";
@@ -96,8 +96,9 @@ export const imposterGame: GameDef = {
   Icon: Glass,
   start: (room) => {
     const w = draw("imposter", bank).item;
-    const imp = draw("imposter-subject", room.players).item;
-    return { prompt: { word: w.word, cat: w.cat, first: pick(room.players).id }, subject: imp.id };
+    const here = present(room.players, room.online);
+    const imp = draw("imposter-subject", here).item;
+    return { prompt: { word: w.word, cat: w.cat, first: pick(here).id }, subject: imp.id };
   },
   flow: {
     open: { next: "guess", label: "לפתוח הצבעה" },

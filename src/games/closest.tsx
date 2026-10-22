@@ -52,13 +52,17 @@ export const closest: GameDef = {
   flow: {
     open: { next: "reveal", label: "חשוף", ready: (ctx) => ctx.round.prompt.answer !== null && ctx.round.prompt.answer !== undefined },
   },
-  score: (ctx) =>
-    merge(
-      ranked(ctx)
-        .slice(0, 3)
-        .map((r, i) => ({ coupleId: coupleOf(ctx, r.id)?.id ?? "", delta: 3 - i, reason: "הכי קרוב" }))
+  // Top 3 places by distance; ties share the better place.
+  score: (ctx) => {
+    const rs = ranked(ctx);
+    return merge(
+      rs
+        .map((r) => ({ r, place: rs.findIndex((x) => x.d === r.d) }))
+        .filter(({ place }) => place < 3)
+        .map(({ r, place }) => ({ coupleId: coupleOf(ctx, r.id)?.id ?? "", delta: 3 - place, reason: "הכי קרוב" }))
         .filter((a) => a.coupleId),
-    ),
+    );
+  },
   // Group questions have no stored answer: the host types it (after guessing, if playing).
   Controls: (ctx) => {
     const { answer, unit } = ctx.round.prompt;

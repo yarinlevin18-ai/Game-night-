@@ -141,22 +141,24 @@ export const coupleColor = (couples: Couple[], coupleId?: string) => {
 };
 
 // Countdown from when this screen first saw `startKey` (each phone runs its own clock).
-export function useCountdown(seconds: number, startKey: string | null) {
+export function useCountdown(seconds: number, startKey: string | null, startedAt?: number) {
   const [left, setLeft] = useState(seconds);
   useEffect(() => {
     if (!startKey) {
       setLeft(seconds);
       return;
     }
-    const t0 = Date.now();
-    setLeft(seconds);
+    // Shared start from the host; ignore it if this phone's clock is way off.
+    const now = Date.now();
+    const t0 = startedAt && Math.abs(now - startedAt) < (seconds + 30) * 1000 ? Math.min(startedAt, now) : now;
+    setLeft(Math.max(0, seconds - Math.floor((now - t0) / 1000)));
     const id = setInterval(() => {
       const l = Math.max(0, seconds - Math.floor((Date.now() - t0) / 1000));
       setLeft(l);
       if (l === 0) clearInterval(id);
     }, 200);
     return () => clearInterval(id);
-  }, [seconds, startKey]);
+  }, [seconds, startKey, startedAt]);
   return left;
 }
 
@@ -196,7 +198,7 @@ export function NumberPad({ onSubmit, unit }: { onSubmit: (n: number) => void; u
               buzz(8);
               if (k === "⌫") setV((x) => x.slice(0, -1));
               else if (k === "✓") onSubmit(Number(v));
-              else setV((x) => (x + k).replace(/^0+/, "").slice(0, 7));
+              else setV((x) => (x === "0" ? k : x + k).slice(0, 7));
             }}
             className={`rounded-2xl py-4 text-2xl font-black transition active:scale-90 disabled:opacity-30 ${k === "✓" ? "bg-c4 text-bg" : "card"}`}
           >

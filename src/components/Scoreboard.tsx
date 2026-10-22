@@ -53,7 +53,7 @@ export function Scoreboard({ couples, mineId, children }: { couples: Couple[]; m
               <span className={`flex-1 truncate text-lg font-bold ${coupleText[c.idx]}`}>{c.name}</span>
               {lead && <Trophy className="size-7 animate-float" title="מובילים" />}
               <span className="relative min-w-12 text-left">
-                <span key={c.score} className="inline-block animate-pop text-3xl font-black tabular-nums">
+                <span key={c.score} dir="ltr" className="inline-block animate-pop text-3xl font-black tabular-nums">
                   {c.score}
                 </span>
                 {d && (

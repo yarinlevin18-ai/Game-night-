@@ -90,12 +90,12 @@ function PinGate({ onOk }: { onOk: () => void }) {
 }
 
 function Console() {
-  const { couples, players, online, conn } = useRoom({});
-  const { round, answers } = useGame();
-  const room = { couples, players, online };
   // The host usually plays too; this phone's player identity (shared with /play).
   const [me, setMeState] = useState<Me | null>(null);
   useEffect(() => setMeState(getMe(ROOM)), []);
+  const { couples, players, online, conn } = useRoom({ presenceKey: me?.playerId });
+  const { round, answers } = useGame();
+  const room = { couples, players, online };
   const pickMe = (p: Player | null) => {
     if (p) setMe(ROOM, { playerId: p.id, name: p.name, coupleId: p.couple_id });
     else clearMe(ROOM);
@@ -155,7 +155,7 @@ function Console() {
         </span>
       </header>
 
-      {!round && <WhoAmI me={me} players={players} onPick={pickMe} />}
+      <WhoAmI me={me} players={players} onPick={pickMe} />
       {round ? <HostGame round={round} answers={answers} room={room} meId={me?.playerId} /> : <GamePicker room={room} />}
 
       <section className="flex flex-col gap-2">

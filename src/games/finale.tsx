@@ -51,7 +51,7 @@ function Podium(ctx: Ctx) {
                 {place === 1 && <Trophy className="size-12 animate-float" />}
                 <CoupleAvatar idx={c.idx} className={place === 1 ? "size-20" : "size-14"} />
                 <span className={`text-center text-sm leading-tight font-black ${coupleText[c.idx]}`}>{c.name}</span>
-                <span className="text-xl font-black tabular-nums">{c.score}</span>
+                <span dir="ltr" className="text-xl font-black tabular-nums">{c.score}</span>
               </div>
               <div
                 className={`flex w-full items-start justify-center rounded-t-2xl pt-2 text-4xl font-black text-bg transition-all duration-700 ease-out ${coupleBg[c.idx]} ${

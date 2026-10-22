@@ -12,7 +12,7 @@ function tally(ctx: Ctx) {
   const count = new Map<string, number>();
   for (const v of votes) count.set(v.value, (count.get(v.value) ?? 0) + 1);
   const max = Math.max(0, ...count.values());
-  const top = new Set([...count].filter(([, n]) => n === max && max > 0).map(([id]) => id));
+  const top = new Set([...count].filter(([, n]) => n === max && max >= 2).map(([id]) => id));
   return { votes, count, top };
 }
 

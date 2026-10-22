@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { byKind, coupleOf, draw, mineOf, parse, playerName, submit, type Ctx } from "@/lib/game";
+import { byKind, coupleOf, draw, mineOf, parse, playerName, present, submit, type Ctx } from "@/lib/game";
 import { Hold, PromptCard, Waiting } from "@/components/ui";
 import { Sparkle } from "@/components/art";
 import { buzz } from "@/lib/ux";
@@ -90,7 +90,7 @@ export const truth: GameDef = {
   blurb: "מישהו כותב עובדה על עצמו. אמת? שקר? כל מי שנפל בפח נותן לו נקודה",
   kind: "social",
   Icon: Sparkle,
-  start: (room) => ({ prompt: {}, subject: draw("truth-subject", room.players).item.id }),
+  start: (room) => ({ prompt: {}, subject: draw("truth-subject", present(room.players, room.online)).item.id }),
   flow: {
     open: { next: "guess", label: "הצג לכולם", ready: (ctx) => !!stmtOf(ctx) },
     guess: { next: "reveal", label: "חשוף" },
@@ -101,6 +101,8 @@ export const truth: GameDef = {
     const subj = coupleOf(ctx, ctx.round.subject_player_id)?.id ?? "";
     return merge(
       byKind(ctx.answers, "vote")
+        // The partner may know the answer; their vote counts for nothing either way.
+        .filter((v) => coupleOf(ctx, v.player_id)?.id !== subj)
         .map((v) =>
           (v.value === "true") === stmt.truth
             ? { coupleId: coupleOf(ctx, v.player_id)?.id ?? "", delta: 1, reason: "אמת או שקר" }

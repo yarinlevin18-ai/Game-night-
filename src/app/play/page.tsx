@@ -88,7 +88,7 @@ export default function Play() {
             {mine && (
               <span className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold ${coupleTint[mine.idx]} ${coupleText[mine.idx]}`}>
                 <CoupleAvatar idx={mine.idx} className="size-5" badge={false} />
-                {mine.score}
+                <span dir="ltr">{mine.score}</span>
               </span>
             )}
             <SoundToggle />

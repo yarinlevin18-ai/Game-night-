@@ -9,6 +9,7 @@ import { coupleBg, coupleText, coupleTint, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
 import { Dice, Glass, Heart } from "@/components/art";
 import { CoupleAvatar } from "@/components/CoupleAvatar";
+import { useRoom } from "@/lib/useRoom";
 
 // Entry: tap your name. That's it.
 export default function Pick() {
@@ -17,6 +18,8 @@ export default function Pick() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [error, setError] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
+  // Who already has the app open, so nobody grabs their partner's name by mistake.
+  const { online } = useRoom({});
 
   useEffect(() => {
     if (getMe(ROOM)) {
@@ -87,6 +90,7 @@ export default function Pick() {
                     } ${picked && picked !== p.id ? "opacity-40" : ""}`}
                   >
                     {p.name}
+                    {online.has(p.id) && picked !== p.id && <span className="block text-xs font-bold opacity-70">כבר מחובר/ת</span>}
                   </button>
                 ))}
             </div>

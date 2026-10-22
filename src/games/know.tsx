@@ -1,7 +1,7 @@
 "use client";
 
 import { know as bank } from "@/content/bank";
-import { byKind, coupleOf, draw, mineOf, playerName, submit, type Ctx } from "@/lib/game";
+import { byKind, coupleOf, draw, mineOf, playerName, present, submit, type Ctx } from "@/lib/game";
 import { Options, PromptCard, Waiting } from "@/components/ui";
 import { Dice } from "@/components/art";
 import { Progress } from "./likely";
@@ -20,7 +20,7 @@ export const know: GameDef = {
   kind: "social",
   Icon: Dice,
   start: (room) => {
-    const subject = draw("know-subject", room.players).item;
+    const subject = draw("know-subject", present(room.players, room.online)).item;
     const q = draw("know", bank).item;
     return { prompt: { q: q.q.replaceAll("{name}", subject.name), options: q.options }, subject: subject.id };
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import { charades as charadesBank, headsup as headsupBank, taboo as tabooBank } from "@/content/bank";
-import { draw, playerName, shuffle, submit, type Ctx } from "@/lib/game";
+import { draw, playerName, present, shuffle, submit, type Ctx } from "@/lib/game";
 import { Clock, PromptCard, useCountdown } from "@/components/ui";
 import { Card, Glass, Sparkle } from "@/components/art";
 import { CoupleAvatar } from "@/components/CoupleAvatar";
@@ -56,7 +56,7 @@ function Turn(ctx: Ctx & { host?: boolean }) {
   const { giverId, mode, n, hits, cur } = turnState(ctx);
   const couple = ctx.couples.find((c) => c.id === ctx.round.prompt.coupleId);
   const running = ctx.round.phase === "guess";
-  const left = useCountdown(SECONDS, running ? ctx.round.id : null);
+  const left = useCountdown(SECONDS, running ? ctx.round.id : null, ctx.round.prompt.startedAt);
   const isGiver = ctx.meId === giverId;
   const isPartner = !isGiver && ctx.players.find((p) => p.id === ctx.meId)?.couple_id === couple?.id;
   const giver = playerName(ctx, giverId);
@@ -106,7 +106,7 @@ function Turn(ctx: Ctx & { host?: boolean }) {
   // Running
   if (isGiver && mode === "headsup")
     return (
-      <div className="fixed inset-0 z-30 flex flex-col bg-bg">
+      <div className={ctx.onHost ? "flex min-h-[60dvh] flex-col overflow-hidden rounded-3xl bg-bg" : "fixed inset-0 z-30 flex flex-col bg-bg"}>
         <div className="flex flex-1 items-center justify-center p-6 text-center text-7xl font-black text-sun">{over ? "נגמר!" : (cur as string)}</div>
         <div className="flex items-center justify-center gap-6 pb-3 text-3xl font-black">
           <span className="tabular-nums">{left}</span>
@@ -155,8 +155,11 @@ const titles: Record<Mode, string> = { taboo: "טאבו", charades: "פנטומ�
 
 // Rotate couples, and alternate who gives within a couple.
 function nextTurn(room: Room, mode: Mode) {
-  const couple = draw(`${mode}-couple`, room.couples).item;
-  const members = room.players.filter((p) => p.couple_id === couple.id);
+  const here = present(room.players, room.online);
+  const couples = room.couples.filter((c) => here.some((p) => p.couple_id === c.id));
+  const couple = draw(`${mode}-couple`, couples.length ? couples : room.couples).item;
+  const all = room.players.filter((p) => p.couple_id === couple.id);
+  const members = all.filter((p) => here.includes(p)).length ? all.filter((p) => here.includes(p)) : all;
   const key = `cn:giver:${mode}:${couple.id}`;
   let last = -1;
   try {

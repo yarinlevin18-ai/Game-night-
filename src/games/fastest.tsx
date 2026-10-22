@@ -24,6 +24,7 @@ function Arena(ctx: Ctx) {
   const mine = mineOf(ctx.answers, ctx.meId, "tap");
   const [green, setGreen] = useState(false);
   const greenAt = useRef(0);
+  const tapped = useRef(false);
 
   useEffect(() => {
     setGreen(false);
@@ -40,7 +41,8 @@ function Arena(ctx: Ctx) {
   }, [ctx.round.id]);
 
   function tap() {
-    if (mine) return;
+    if (mine || tapped.current) return;
+    tapped.current = true;
     const v = green ? String(Math.round(performance.now() - greenAt.current)) : EARLY;
     buzz(green ? 15 : 80);
     submit(ctx.round.id, ctx.meId!, "tap", v);

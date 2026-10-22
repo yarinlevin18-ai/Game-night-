@@ -13,7 +13,7 @@ const SECONDS = 60;
 
 function Body(ctx: Ctx) {
   const c = ctx.couples.find((x) => x.id === ctx.round.prompt.coupleId);
-  const left = useCountdown(SECONDS, ctx.round.phase === "guess" ? ctx.round.id : null);
+  const left = useCountdown(SECONDS, ctx.round.phase === "guess" ? ctx.round.id : null, ctx.round.prompt.startedAt);
   return (
     <div className="flex flex-col gap-4">
       {c && (

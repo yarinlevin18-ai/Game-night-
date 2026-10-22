@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { Couple, Player } from "@/lib/supabase";
-import { endGame, giveAwards, startRound, updateRound, type Answer, type Round } from "@/lib/game";
+import { advance, claimAward, endGame, giveAwards, startRound, type Answer, type Round } from "@/lib/game";
 import { gameById, GAMES } from "@/games";
 import type { GameDef } from "@/games/types";
 import { coupleText, delay } from "@/lib/colors";
@@ -100,8 +100,11 @@ export function HostGame({ round, answers, room, meId }: { round: Round; answers
     if (busy) return;
     setBusy(true);
     buzz(15);
-    await fn();
-    setBusy(false);
+    try {
+      await fn();
+    } finally {
+      setBusy(false);
+    }
   };
   const next = () => act(async () => {
     const r = def.start(room);
@@ -121,18 +124,18 @@ export function HostGame({ round, answers, room, meId }: { round: Round; answers
 
       {meId ? (
         <>
-          <def.Player key={round.id} {...ctx} meId={meId} />
+          <def.Player key={round.id} {...ctx} meId={meId} onHost />
           {round.phase !== "reveal" && <AnsweredCount answers={answers} total={room.players.length} />}
         </>
       ) : (
-        <def.Host {...ctx} />
+        <def.Host key={round.id} {...ctx} />
       )}
-      {def.Controls && <def.Controls {...ctx} />}
+      {def.Controls && <def.Controls key={round.id} {...ctx} />}
 
       {step && (
         <button
           disabled={!canStep || busy}
-          onClick={() => act(() => updateRound(round.id, { phase: step.next }))}
+          onClick={() => act(() => advance(round, step.next))}
           className="rounded-2xl bg-party py-4 text-2xl font-black text-white shadow-lg shadow-pop/30 transition active:scale-95 disabled:opacity-40"
         >
           {step.label}
@@ -159,7 +162,7 @@ export function HostGame({ round, answers, room, meId }: { round: Round; answers
               {awards.length > 0 && (
                 <button
                   disabled={awarded || busy}
-                  onClick={() => act(() => giveAwards(round.id, round.prompt, awards))}
+                  onClick={() => act(() => giveAwards(round.id, awards))}
                   className="mt-1 rounded-xl bg-c4 py-3 text-xl font-black text-bg transition active:scale-95 disabled:opacity-40"
                 >
                   {awarded ? "✓ חולק" : "חלק נקודות"}
@@ -200,8 +203,7 @@ function ManualAward({ round, couple }: { round: Round; couple?: Couple }) {
             onClick={async () => {
               setGiven(d);
               buzz(15);
-              if (d) await supabase.rpc("cn_award", { p_couple: couple.id, p_delta: d, p_reason: "אתגר" });
-              await updateRound(round.id, { prompt: { ...round.prompt, awarded: true } });
+              if ((await claimAward(round.id)) && d) await supabase.rpc("cn_award", { p_couple: couple.id, p_delta: d, p_reason: "אתגר" });
             }}
             className={`flex-1 rounded-xl py-3 text-lg font-black transition active:scale-90 disabled:opacity-40 ${given === d ? "bg-c4 text-bg" : "bg-black/25"}`}
           >
