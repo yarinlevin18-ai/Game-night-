@@ -1,85 +1,42 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase, type Couple, type Player } from "@/lib/supabase";
 import { getMe, clearMe, type Me } from "@/lib/session";
 import { ROOM } from "@/lib/room";
 import { coupleBg, coupleBorder, coupleText, coupleTint, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
 import { Hourglass, Sparkle } from "@/components/art";
 import { CoupleAvatar } from "@/components/CoupleAvatar";
-
-type Conn = "connecting" | "live" | "down";
+import { Scoreboard } from "@/components/Scoreboard";
+import { useRoom, type Conn } from "@/lib/useRoom";
 
 export default function Play() {
   const router = useRouter();
   const [me, setMeState] = useState<Me | null>(null);
-  const [couples, setCouples] = useState<Couple[]>([]);
-  const [players, setPlayers] = useState<Player[]>([]);
-  const [online, setOnline] = useState<Set<string>>(new Set());
-  const [conn, setConn] = useState<Conn>("connecting");
   const [toast, setToast] = useState<{ id: string; text: string } | null>(null);
-  const playersRef = useRef<Player[]>([]);
-  const synced = useRef(false);
+  const { couples, players, online, conn, loaded } = useRoom({
+    presenceKey: me?.playerId,
+    enabled: !!me,
+    onJoin: (p) => {
+      setToast({ id: `${p.id}-${Date.now()}`, text: `${p.name} הגיע/ה!` });
+      buzz(15);
+    },
+  });
 
   useEffect(() => {
     const m = getMe(ROOM);
-    if (!m) {
-      router.replace("/");
-      return;
-    }
-    setMeState(m);
-
-    const load = async () => {
-      const [c, p] = await Promise.all([
-        supabase.from("cn_couples").select("*").eq("room_code", ROOM).order("idx"),
-        supabase.from("cn_players").select("*").eq("room_code", ROOM).order("created_at"),
-      ]);
-      if (c.data) setCouples(c.data);
-      if (!p.data) return;
-      setPlayers(p.data);
-      playersRef.current = p.data;
-      // Player was removed; back to the name picker.
-      if (!p.data.some((x) => x.id === m.playerId)) {
-        clearMe(ROOM);
-        router.replace("/");
-      }
-    };
-    load();
-
-    // Presence = who has the app open right now. Postgres changes = scores/names.
-    const ch = supabase.channel(`room-${ROOM}`, { config: { presence: { key: m.playerId } } });
-    ch.on("presence", { event: "sync" }, () => {
-      setOnline(new Set(Object.keys(ch.presenceState())));
-      synced.current = true;
-    })
-      .on("presence", { event: "join" }, ({ key }) => {
-        if (!synced.current || key === m.playerId) return;
-        const p = playersRef.current.find((x) => x.id === key);
-        if (p) {
-          setToast({ id: `${key}-${Date.now()}`, text: `${p.name} הגיע/ה!` });
-          buzz(15);
-        }
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "cn_players", filter: `room_code=eq.${ROOM}` }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "cn_couples", filter: `room_code=eq.${ROOM}` }, load)
-      .subscribe((s) => {
-        if (s === "SUBSCRIBED") {
-          setConn("live");
-          ch.track({ at: Date.now() });
-          load(); // catch anything missed while reconnecting
-        } else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT" || s === "CLOSED") setConn("down");
-      });
-
-    // Phones sleep; refresh when the tab comes back.
-    const onVis = () => document.visibilityState === "visible" && load();
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      document.removeEventListener("visibilitychange", onVis);
-      supabase.removeChannel(ch);
-    };
+    if (!m) router.replace("/");
+    else setMeState(m);
   }, [router]);
+
+  // Player was removed; back to the name picker.
+  useEffect(() => {
+    if (me && loaded && players.length && !players.some((x) => x.id === me.playerId)) {
+      clearMe(ROOM);
+      router.replace("/");
+    }
+  }, [me, loaded, players, router]);
 
   useEffect(() => {
     if (!toast) return;
@@ -129,6 +86,11 @@ export default function Play() {
           </p>
         )}
       </header>
+
+      <section className="flex animate-rise flex-col gap-2 [animation-delay:300ms]">
+        <h2 className="font-bold">טבלת הניקוד</h2>
+        <Scoreboard couples={couples} mineId={me.coupleId} />
+      </section>
 
       <div className="card animate-rise rounded-3xl p-6 text-center [animation-delay:350ms]">
         <Hourglass className="mx-auto size-16 animate-float drop-shadow-[0_8px_16px_rgb(255_201_60/0.35)]" />
