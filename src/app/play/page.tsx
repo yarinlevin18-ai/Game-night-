@@ -6,7 +6,7 @@ import { getMe, clearMe, type Me } from "@/lib/session";
 import { ROOM } from "@/lib/room";
 import { coupleBg, coupleBorder, coupleText, coupleTint, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
-import { Hourglass, Sparkle } from "@/components/art";
+import { Dice, Hourglass, Sparkle } from "@/components/art";
 import { CoupleAvatar } from "@/components/CoupleAvatar";
 import { Scoreboard } from "@/components/Scoreboard";
 import { useRoom, type Conn } from "@/lib/useRoom";
@@ -14,6 +14,9 @@ import { useGame } from "@/lib/game";
 import { play } from "@/lib/sound";
 import { SoundToggle } from "@/components/SoundToggle";
 import { RulesButton } from "@/components/Rules";
+import { useBets } from "@/lib/bets";
+import { props as betProps } from "@/content/props";
+import Link from "next/link";
 import { gameById } from "@/games";
 
 export default function Play() {
@@ -151,6 +154,8 @@ export default function Play() {
         <Scoreboard couples={couples} mineId={me.coupleId} />
       </section>
 
+      <BetsCard meId={me.playerId} />
+
       <div className="card animate-rise rounded-3xl p-6 text-center [animation-delay:350ms]">
         <Hourglass className="mx-auto size-16 animate-float drop-shadow-[0_8px_16px_rgb(255_201_60/0.35)]" />
         <p className="mt-3 flex items-center justify-center gap-1 text-lg font-bold">
@@ -233,5 +238,23 @@ function ConnDot({ conn }: { conn: Conn }) {
       </span>
       {map.t}
     </span>
+  );
+}
+
+function BetsCard({ meId }: { meId: string }) {
+  const { bets, state } = useBets();
+  const done = bets.filter((b) => b.player_id === meId).length;
+  const resolved = state.awarded;
+  return (
+    <Link href="/bets" className="flex animate-rise items-center gap-3 rounded-3xl bg-party p-4 text-white shadow-lg shadow-pop/30 active:scale-[0.98] [animation-delay:320ms]">
+      <Dice className="size-12 shrink-0 animate-wiggle" />
+      <span className="flex-1">
+        <span className="block text-xl font-black">הימורי הערב</span>
+        <span className="block text-sm font-bold opacity-90">
+          {resolved ? "התוצאות פורסמו! מי צדק?" : state.locked ? "ההימורים נעולים. בואו לראות על מה כולם הימרו" : `הימרת על ${done}/${betProps.length}. המרו לפני שנועלים!`}
+        </span>
+      </span>
+      <span className="text-2xl font-black">←</span>
+    </Link>
   );
 }

@@ -23,7 +23,7 @@ export default function Pick() {
 
   useEffect(() => {
     if (getMe(ROOM)) {
-      router.replace("/play");
+      router.replace(nextPath());
       return;
     }
     Promise.all([
@@ -40,7 +40,7 @@ export default function Pick() {
     setPicked(p.id);
     buzz(20);
     setMe(ROOM, { playerId: p.id, name: p.name, coupleId: p.couple_id });
-    setTimeout(() => router.push("/play"), 350);
+    setTimeout(() => router.push(nextPath()), 350);
   }
 
   return (
@@ -99,4 +99,13 @@ export default function Pick() {
       </div>
     </div>
   );
+}
+
+// Where to go after picking a name (shared links like /bets send ?next=/bets).
+function nextPath() {
+  try {
+    const n = new URLSearchParams(window.location.search).get("next");
+    if (n && n.startsWith("/") && !n.startsWith("//")) return n;
+  } catch {}
+  return "/play";
 }

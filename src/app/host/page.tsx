@@ -13,6 +13,7 @@ import { useGame } from "@/lib/game";
 import { clearMe, getMe, setMe, type Me } from "@/lib/session";
 import type { Player } from "@/lib/supabase";
 import { SoundToggle } from "@/components/SoundToggle";
+import { HostBets } from "@/components/HostBets";
 
 const HOST_KEY = "cn:host";
 type Ev = { id: number; couple_id: string; delta: number; reason: string | null; created_at: string };
@@ -156,6 +157,7 @@ function Console() {
       </header>
 
       <WhoAmI me={me} players={players} onPick={pickMe} />
+      {!round && <HostBets couples={couples} players={players} />}
       {round ? <HostGame round={round} answers={answers} room={room} meId={me?.playerId} /> : <GamePicker room={room} />}
 
       <section className="flex flex-col gap-2">
