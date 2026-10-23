@@ -7,7 +7,7 @@ import { getMe, type Me } from "@/lib/session";
 import { ROOM } from "@/lib/room";
 import { useRoom } from "@/lib/useRoom";
 import { placeBet, scoreBets, useBets, type Bet } from "@/lib/bets";
-import { props, type Prop } from "@/content/props";
+import { propOptions, props, type Prop } from "@/content/props";
 import type { Couple, Player } from "@/lib/supabase";
 import { coupleBg, coupleText, coupleTint, delay } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
@@ -40,7 +40,7 @@ export default function Bets() {
         <Dice className="size-16 animate-float" />
         <h1 className="animate-pop text-4xl font-black text-party">הימורי הערב</h1>
         <p className="animate-rise text-mute">
-          {state.locked ? "ההימורים נעולים. עכשיו רואים על מה כולם הימרו 👀" : "המרו מה יקרה הערב. בסוף הערב המנחה חושף, וכל הימור נכון = נקודות לזוג"}
+          {state.locked ? "ההימורים נעולים. עכשיו רואים על מה כולם הימרו 👀" : "המרו מה יקרה הערב, על החבר'ה ועל המשחקים. בסוף הערב המנחה חושף, וכל הימור נכון = נקודות לזוג"}
         </p>
         {!state.locked && (
           <div className="mt-1 w-full max-w-xs">
@@ -107,15 +107,7 @@ function PropCard({
   onPick: (v: string) => void;
 }) {
   const count = (v: string) => bets.filter((b) => b.value === v).length;
-  const options: { v: string; label: string; idx?: number }[] =
-    prop.kind === "player"
-      ? players.map((p) => ({ v: p.id, label: p.name, idx: couples.find((c) => c.id === p.couple_id)?.idx }))
-      : prop.kind === "couple"
-        ? couples.map((c) => ({ v: c.id, label: c.name, idx: c.idx }))
-        : [
-            { v: "yes", label: "כן" },
-            { v: "no", label: "לא" },
-          ];
+  const options = propOptions(prop, players, couples);
   const hit = result !== undefined && mine === result;
 
   return (
@@ -126,7 +118,7 @@ function PropCard({
           <bdi dir="ltr">+{prop.points}</bdi>
         </span>
       </div>
-      <div className={`grid gap-2 ${prop.kind === "couple" || prop.kind === "yesno" ? "grid-cols-2" : "grid-cols-4"}`}>
+      <div className={`grid gap-2 ${prop.kind === "player" ? "grid-cols-4" : "grid-cols-2"}`}>
         {options.map((o) => {
           const on = mine === o.v;
           const isResult = result === o.v;
@@ -142,7 +134,7 @@ function PropCard({
               }`}
             >
               {prop.kind === "couple" && o.idx && <CoupleAvatar idx={o.idx} className="size-7" badge={false} />}
-              <span className={o.idx ? coupleText[o.idx] : ""}>{o.label}</span>
+              <span dir="auto" className={o.idx ? coupleText[o.idx] : ""}>{o.label}</span>
               {locked && <span className="text-xs font-bold text-mute">{count(o.v)} 🎲</span>}
               {on && <span className="absolute -top-2 -left-1 rounded-full bg-white px-1.5 text-[10px] font-black text-bg">שלך</span>}
             </button>

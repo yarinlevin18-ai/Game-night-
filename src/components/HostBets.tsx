@@ -3,7 +3,8 @@
 import { useState } from "react";
 import type { Couple, Player } from "@/lib/supabase";
 import { awardBets, scoreBets, setLocked, setResult, useBets } from "@/lib/bets";
-import { props } from "@/content/props";
+import { propOptions, props } from "@/content/props";
+import { resolveFromNight } from "@/lib/betAuto";
 import { coupleText, coupleTint } from "@/lib/colors";
 import { buzz } from "@/lib/ux";
 import { Dice } from "./art";
@@ -16,7 +17,7 @@ export function HostBets({ couples, players }: { couples: Couple[]; players: Pla
   const bettors = new Set(bets.map((b) => b.player_id));
   const missing = players.filter((p) => !bettors.has(p.id));
   const url = typeof window !== "undefined" ? `${window.location.origin}/bets` : "/bets";
-  const msg = `🎲 הימורי הערב פתוחים! המרו מי יגיע אחרון, מי יירדם ראשון ומי ינצח. כל הימור נכון = נקודות לזוג 👇\n${url}`;
+  const msg = `🎲 הימורי הערב פתוחים! מי ינצח, מי יעבוד על כולם באמת או שקר, מי ישאל ראשון מתי מתחתנים וכמה בקבוקים ייגמרו. כל הימור נכון = נקודות לזוג 👇\n${url}`;
   const resolvedCount = Object.keys(state.results).length;
   const { perCouple } = scoreBets(bets, state.results, players);
 
@@ -31,17 +32,17 @@ export function HostBets({ couples, players }: { couples: Couple[]; players: Pla
     }
   };
 
-  // Fill winner / last place from the current scoreboard.
+  // Fill what the app can work out by itself: scoreboard + game history.
+  const [autoNote, setAutoNote] = useState<string | null>(null);
   const autofill = () =>
     act(async () => {
-      const ranked = [...couples].sort((a, b) => b.score - a.score);
+      const found = await resolveFromNight(couples, players);
       let r = state.results;
-      if (ranked[0] && ranked[0].score !== ranked[1]?.score) {
-        await setResult(r, "winner", ranked[0].id);
-        r = { ...r, winner: ranked[0].id };
+      for (const [prop, value] of Object.entries(found)) {
+        await setResult(r, prop, value);
+        r = { ...r, [prop]: value };
       }
-      const last = ranked.at(-1);
-      if (last && last.score !== ranked.at(-2)?.score) await setResult(r, "last", last.id);
+      setAutoNote(Object.keys(found).length ? `מולאו ${Object.keys(found).length} הימורים מתוך המשחקים. את השאר סמנו ידנית` : "עוד אין מספיק נתונים מהמשחקים");
     });
 
   return (
@@ -91,22 +92,17 @@ export function HostBets({ couples, players }: { couples: Couple[]; players: Pla
               <div className="flex items-center justify-between">
                 <p className="font-black">מה קרה בפועל? ({resolvedCount}/{props.length})</p>
                 <button onClick={autofill} disabled={busy || state.awarded} className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold disabled:opacity-40">
-                  מלא מנצחים לפי הטבלה
+                  מלא אוטומטית מהערב
                 </button>
               </div>
+              {autoNote && <p className="text-center text-xs font-bold text-sun">{autoNote}</p>}
               {props.map((p) => {
-                const opts =
-                  p.kind === "player"
-                    ? players.map((x) => ({ v: x.id, label: x.name, idx: couples.find((c) => c.id === x.couple_id)?.idx }))
-                    : p.kind === "couple"
-                      ? couples.map((c) => ({ v: c.id, label: c.name, idx: c.idx }))
-                      : [
-                          { v: "yes", label: "כן", idx: undefined },
-                          { v: "no", label: "לא", idx: undefined },
-                        ];
+                const opts = propOptions(p, players, couples);
                 return (
                   <div key={p.id} className="flex flex-col gap-1.5">
-                    <p className="text-sm font-bold">{p.q}</p>
+                    <p className="text-sm font-bold">
+                      {p.q} {p.auto && <span className="text-xs text-mute">(אוטומטי)</span>}
+                    </p>
                     <div className="flex flex-wrap gap-1.5">
                       {opts.map((o) => {
                         const on = state.results[p.id] === o.v;
@@ -119,7 +115,7 @@ export function HostBets({ couples, players }: { couples: Couple[]; players: Pla
                               on ? "bg-c4 text-bg" : o.idx ? `${coupleTint[o.idx]} ${coupleText[o.idx]}` : "bg-white/10"
                             }`}
                           >
-                            {o.label}
+                            <bdi dir="auto">{o.label}</bdi>
                           </button>
                         );
                       })}
