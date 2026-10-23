@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Couple, Player } from "@/lib/supabase";
 import { coupleBg, coupleBorder, coupleText, coupleTint, delay } from "@/lib/colors";
 import { CoupleAvatar } from "./CoupleAvatar";
@@ -69,7 +69,7 @@ export function PlayerPicker({
                 buzz();
                 onPick(p.id);
               }}
-              className={`flex animate-pop items-center gap-2 rounded-2xl border-2 px-3 py-3 text-lg font-black transition active:scale-95 ${
+              className={`flex items-center gap-2 rounded-2xl border-2 px-3 py-3 text-lg font-black transition active:scale-95 ${on ? "animate-wiggle" : "animate-pop"} ${
                 c ? coupleTint[c.idx] : ""
               } ${on && c ? `${coupleBorder[c.idx]} scale-105` : "border-transparent"}`}
               style={delay(i, 40)}
@@ -97,7 +97,7 @@ export function Options({ options, value, onPick, correct }: { options: string[]
               buzz();
               onPick?.(o);
             }}
-            className={`animate-pop rounded-2xl px-3 py-5 text-lg font-black text-bg transition active:scale-95 ${colors[i % 4]} ${
+            className={`rounded-2xl px-3 py-5 text-lg font-black text-bg transition active:scale-95 ${value === o || correct === o ? "animate-wiggle" : "animate-pop"} ${colors[i % 4]} ${
               dim ? "opacity-35" : ""
             } ${correct === o ? "ring-4 ring-white" : ""}`}
             style={delay(i, 60)}
@@ -114,6 +114,11 @@ export function Options({ options, value, onPick, correct }: { options: string[]
 export function Bars({ rows }: { rows: { key: string; label: React.ReactNode; n: number; color: string; mark?: boolean }[] }) {
   const max = Math.max(1, ...rows.map((r) => r.n));
   const sorted = [...rows].sort((a, b) => b.n - a.n);
+  const [grown, setGrown] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setGrown(true), 60);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <div className="flex flex-col gap-2">
       {sorted.map((r, i) => (
@@ -124,9 +129,9 @@ export function Bars({ rows }: { rows: { key: string; label: React.ReactNode; n:
               className={`flex h-full items-center justify-end rounded-full px-3 font-black text-bg transition-[width] duration-1000 ease-out ${r.color} ${
                 r.mark ? "ring-2 ring-white" : ""
               }`}
-              style={{ width: `${Math.max(12, (r.n / max) * 100)}%` }}
+              style={{ width: grown ? `${Math.max(12, (r.n / max) * 100)}%` : "12%", transitionDelay: `${i * 120 + 150}ms` }}
             >
-              {r.n}
+              <CountUp value={r.n} />
             </div>
           </div>
         </div>
@@ -212,4 +217,31 @@ export function NumberPad({ onSubmit, unit }: { onSubmit: (n: number) => void; u
 
 export function Pill({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return <span className={`inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-sm font-bold ${className}`}>{children}</span>;
+}
+
+// Number that rolls from its previous value to the new one. With `id`, the last value
+// survives remounts (so a scoreboard counts 7 -> 9, not 0 -> 9).
+const lastShown = new Map<string, number>();
+export function CountUp({ value, ms = 900, id }: { value: number; ms?: number; id?: string }) {
+  const start = id ? (lastShown.get(id) ?? value) : 0;
+  const [shown, setShown] = useState(start);
+  const from = useRef(start);
+  useEffect(() => {
+    const a = from.current;
+    if (id) lastShown.set(id, a);
+    if (a === value) return;
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - t0) / ms);
+      const v = Math.round(a + (value - a) * (1 - Math.pow(1 - k, 3)));
+      setShown(v);
+      from.current = v;
+      if (id) lastShown.set(id, v);
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, ms, id]);
+  return <span className="tabular-nums">{shown}</span>;
 }

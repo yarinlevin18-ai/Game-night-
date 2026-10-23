@@ -10,6 +10,7 @@ import { buzz } from "@/lib/ux";
 import { supabase } from "@/lib/supabase";
 import { Dice, Trophy } from "./art";
 import { RulesButton } from "./Rules";
+import { Stage } from "./Stage";
 import { getTeams, shuffleTeams, TEAM_META, type TeamId, type Teams } from "@/lib/teams";
 
 type RoomData = { couples: Couple[]; players: Player[]; online: Set<string> };
@@ -99,6 +100,7 @@ export function HostGame({ round, answers, room, meId }: { round: Round; answers
   const awards = round.phase === "reveal" && def.score ? def.score(ctx) : [];
   const awarded = !!round.prompt.awarded;
   const name = (id: string) => room.couples.find((c) => c.id === id);
+  const mine = name(room.players.find((p) => p.id === meId)?.couple_id ?? "");
 
   const act = async (fn: () => Promise<unknown>) => {
     if (busy) return;
@@ -135,14 +137,16 @@ export function HostGame({ round, answers, room, meId }: { round: Round; answers
             : " · הסבב הושלם, כולם שיחקו ✓"}
         </p>
       )}
-      {meId ? (
-        <>
-          <def.Player key={round.id} {...ctx} meId={meId} onHost />
-          {round.phase !== "reveal" && <AnsweredCount answers={answers} total={room.players.length} />}
-        </>
-      ) : (
-        <def.Host key={round.id} {...ctx} />
-      )}
+      <Stage round={round} def={def} score={mine?.score} coupleIdx={mine?.idx}>
+        {meId ? (
+          <>
+            <def.Player key={round.id} {...ctx} meId={meId} onHost />
+            {round.phase !== "reveal" && <AnsweredCount answers={answers} total={room.players.length} />}
+          </>
+        ) : (
+          <def.Host key={round.id} {...ctx} />
+        )}
+      </Stage>
       {def.Controls && <def.Controls key={round.id} {...ctx} />}
 
       {step && (

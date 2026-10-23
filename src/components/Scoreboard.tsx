@@ -5,6 +5,7 @@ import type { Couple } from "@/lib/supabase";
 import { coupleBorder, coupleText, coupleTint } from "@/lib/colors";
 import { CoupleAvatar } from "./CoupleAvatar";
 import { Trophy } from "./art";
+import { CountUp } from "./ui";
 
 const ROW = 64; // px per row; rows slide to their rank position
 
@@ -54,7 +55,7 @@ export function Scoreboard({ couples, mineId, children }: { couples: Couple[]; m
               {lead && <Trophy className="size-7 animate-float" title="מובילים" />}
               <span className="relative min-w-12 text-left">
                 <span key={c.score} dir="ltr" className="inline-block animate-pop text-3xl font-black tabular-nums">
-                  {c.score}
+                  <CountUp value={c.score} id={c.id} ms={700} />
                 </span>
                 {d && (
                   <span

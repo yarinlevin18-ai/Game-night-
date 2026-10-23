@@ -18,6 +18,7 @@ import { useBets } from "@/lib/bets";
 import { props as betProps } from "@/content/props";
 import Link from "next/link";
 import { gameById } from "@/games";
+import { Stage } from "@/components/Stage";
 
 export default function Play() {
   const router = useRouter();
@@ -99,13 +100,15 @@ export default function Play() {
             <SoundToggle />
           </span>
         </div>
-        <def.Player key={round.id} round={round} answers={answers} couples={couples} players={players} online={online} meId={me.playerId} />
-        {round.phase === "reveal" && def.kind !== "finale" && (
-          <section className="mt-2 flex animate-rise flex-col gap-2 [animation-delay:600ms]">
-            <h2 className="font-bold">טבלת הניקוד</h2>
-            <Scoreboard couples={couples} mineId={me.coupleId} />
-          </section>
-        )}
+        <Stage round={round} def={def} score={mine?.score} coupleIdx={mine?.idx}>
+          <def.Player key={round.id} round={round} answers={answers} couples={couples} players={players} online={online} meId={me.playerId} />
+          {round.phase === "reveal" && def.kind !== "finale" && (
+            <section className="mt-2 flex animate-rise flex-col gap-2 [animation-delay:600ms]">
+              <h2 className="font-bold">טבלת הניקוד</h2>
+              <Scoreboard couples={couples} mineId={me.coupleId} />
+            </section>
+          )}
+        </Stage>
         {conn !== "live" && <p className="text-center text-xs text-pop">מתחבר מחדש…</p>}
       </div>
     );
