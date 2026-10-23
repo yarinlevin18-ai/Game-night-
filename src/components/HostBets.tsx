@@ -17,7 +17,7 @@ export function HostBets({ couples, players }: { couples: Couple[]; players: Pla
   const bettors = new Set(bets.map((b) => b.player_id));
   const missing = players.filter((p) => !bettors.has(p.id));
   const url = typeof window !== "undefined" ? `${window.location.origin}/bets` : "/bets";
-  const msg = `🎲 הימורי הערב פתוחים! מי ינצח, מי יעבוד על כולם באמת או שקר, מי ישאל ראשון מתי מתחתנים וכמה בקבוקים ייגמרו. כל הימור נכון = נקודות לזוג 👇\n${url}`;
+  const msg = `🎲 הימורי הערב פתוחים! מי ינצח, מי יהיה הכי שיכור, לאיזה זוג תיגמר ההכלה ראשון ואם יהיה פנצ׳ר. כל הימור נכון = נקודות לזוג 👇\n${url}`;
   const resolvedCount = Object.keys(state.results).length;
   const { perCouple } = scoreBets(bets, state.results, players);
 
@@ -36,13 +36,13 @@ export function HostBets({ couples, players }: { couples: Couple[]; players: Pla
   const [autoNote, setAutoNote] = useState<string | null>(null);
   const autofill = () =>
     act(async () => {
-      const found = await resolveFromNight(couples, players);
+      const found = await resolveFromNight(couples);
       let r = state.results;
       for (const [prop, value] of Object.entries(found)) {
         await setResult(r, prop, value);
         r = { ...r, [prop]: value };
       }
-      setAutoNote(Object.keys(found).length ? `מולאו ${Object.keys(found).length} הימורים מתוך המשחקים. את השאר סמנו ידנית` : "עוד אין מספיק נתונים מהמשחקים");
+      setAutoNote(found.winner ? "הזוג המנצח סומן לפי הטבלה. את השאר סמנו ידנית" : "יש תיקו בראש הטבלה, סמנו ידנית");
     });
 
   return (

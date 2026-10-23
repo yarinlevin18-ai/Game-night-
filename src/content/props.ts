@@ -6,16 +6,19 @@ export type Prop = {
   q: string;
   kind: "player" | "couple" | "yesno" | "choice";
   options?: string[];
+  // Extra choices after the couples/players (e.g. "it won't happen").
+  extra?: { v: string; label: string }[];
   points: number;
   auto?: boolean;
 };
 
 export const props: Prop[] = [
   { id: "winner", q: "איזה זוג ינצח הערב?", kind: "couple", points: 2, auto: true },
-  { id: "last", q: "איזה זוג יסיים במקום האחרון?", kind: "couple", points: 1, auto: true },
-  { id: "star", q: "מי ייבחר הכי הרבה פעמים ב״מי הכי סביר ש...״?", kind: "player", points: 2, auto: true },
-  { id: "liar", q: "מי יעבוד על הכי הרבה אנשים ב״אמת או שקר״?", kind: "player", points: 2, auto: true },
-  { id: "escape", q: "מתחזה כלשהו יצליח לברוח הערב בלי להיתפס?", kind: "yesno", points: 1, auto: true },
+  { id: "drunk", q: "מי יהיה הכי שיכור/ה?", kind: "player", points: 2 },
+  { id: "patience", q: "לאיזה זוג תיגמר ההכלה ראשון?", kind: "couple", points: 1 },
+  { id: "complain", q: "איזה זוג יתלונן הכי הרבה?", kind: "couple", points: 1 },
+  { id: "forget", q: "מי ישכח הכי הרבה דברים?", kind: "player", points: 1 },
+  { id: "flat", q: "נחווה פנצ׳ר? ואם כן, אצל איזה זוג ראשון?", kind: "couple", extra: [{ v: "none", label: "לא יהיה פנצ׳ר" }], points: 2 },
   { id: "cheat", q: "מי ייתפס מרמה בטאבו?", kind: "player", points: 1 },
   { id: "wedding", q: "מי ישאל ראשון ״נו, אז מתי אתם מתחתנים / מביאים ילד?״", kind: "player", points: 1 },
   { id: "blame", q: "מי יאשים את האפליקציה כשהוא מפסיד?", kind: "player", points: 1 },
@@ -31,8 +34,9 @@ export function propOptions(
   players: { id: string; name: string; couple_id: string }[],
   couples: { id: string; name: string; idx: number }[],
 ): { v: string; label: string; idx?: number }[] {
-  if (p.kind === "player") return players.map((x) => ({ v: x.id, label: x.name, idx: couples.find((c) => c.id === x.couple_id)?.idx }));
-  if (p.kind === "couple") return couples.map((c) => ({ v: c.id, label: c.name, idx: c.idx }));
+  const extra = p.extra ?? [];
+  if (p.kind === "player") return [...players.map((x) => ({ v: x.id, label: x.name, idx: couples.find((c) => c.id === x.couple_id)?.idx })), ...extra];
+  if (p.kind === "couple") return [...couples.map((c) => ({ v: c.id, label: c.name, idx: c.idx })), ...extra];
   if (p.kind === "yesno")
     return [
       { v: "yes", label: "כן" },
